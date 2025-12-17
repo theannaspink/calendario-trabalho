@@ -434,17 +434,8 @@
     <script defer src="/_vercel/insights/script.js"></script>
 
     <script type="module">
-        // Importar Supabase
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
-        
-        // Configurações do Supabase - NÃO COMMITAR CHAVES
-        // Substitua a seguir com a sua URL do Supabase e use uma chave ANON pública.
-        // Para evitar expor segredos, defina a chave como uma variável de ambiente no painel Vercel
-        const SUPABASE_URL = 'https://xxfmicoulsnwuntynefa.supabase.co'
-        const SUPABASE_KEY = 'REPLACE_WITH_ANON_KEY'
-        
-        // Inicializar Supabase
-        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+        // NOTE: this app uses serverless API endpoints to access Supabase securely.
+        // Set `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` in Vercel Environment Variables.
         
         // Configurações
         const START_DATE = new Date(2025, 11, 16); // 16/12/2025
@@ -535,63 +526,54 @@
             document.getElementById('days-remaining').textContent = remaining;
         }
         
-        // Carregar dias marcados do Supabase
+        // Carregar dias marcados via API serverless
         async function loadCompletedDays() {
             try {
-                const { data, error } = await supabase
-                    .from('completed_days')
-                    .select('date')
-                    .eq('user_id', userId);
-                
-                if (error) throw error;
-                
-                completedDays = data ? data.map(item => item.date) : [];
-                generateCalendar(currentMonth, currentYear);
-                updateCounter();
+                const q = userId ? `?userId=${encodeURIComponent(userId)}` : ''
+                const resp = await fetch('/api/getMarks' + q)
+                if (!resp.ok) throw new Error('Failed to fetch marks')
+                const data = await resp.json()
+                completedDays = Array.isArray(data) ? data.filter(d=>d.status).map(item => item.date) : []
+                generateCalendar(currentMonth, currentYear)
+                updateCounter()
             } catch (error) {
-                console.error('Erro ao carregar dados:', error);
-                // Fallback para localStorage
-                completedDays = JSON.parse(localStorage.getItem('completedDays') || '[]');
-                generateCalendar(currentMonth, currentYear);
-                updateCounter();
+                console.error('Erro ao carregar dados via API:', error)
+                completedDays = JSON.parse(localStorage.getItem('completedDays') || '[]')
+                generateCalendar(currentMonth, currentYear)
+                updateCounter()
             }
         }
         
         // Marcar/desmarcar dia
         async function toggleDayCompletion(dateStr, dayElement) {
-            const index = completedDays.indexOf(dateStr);
-            
+            const index = completedDays.indexOf(dateStr)
             try {
                 if (index > -1) {
                     // Desmarcar
-                    completedDays.splice(index, 1);
-                    dayElement.classList.remove('completed');
-                    
-                    // Remover do Supabase
-                    await supabase
-                        .from('completed_days')
-                        .delete()
-                        .eq('user_id', userId)
-                        .eq('date', dateStr);
+                    const resp = await fetch('/api/upsertMark', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: userId, date: dateStr, status: false })
+                    })
+                    if (!resp.ok) throw new Error('Failed to delete mark')
+                    completedDays.splice(index, 1)
+                    dayElement.classList.remove('completed')
                 } else {
                     // Marcar
-                    completedDays.push(dateStr);
-                    dayElement.classList.add('completed');
-                    
-                    // Salvar no Supabase
-                    await supabase
-                        .from('completed_days')
-                        .insert([
-                            { user_id: userId, date: dateStr }
-                        ]);
+                    const resp = await fetch('/api/upsertMark', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_id: userId, date: dateStr, status: true })
+                    })
+                    if (!resp.ok) throw new Error('Failed to upsert mark')
+                    completedDays.push(dateStr)
+                    dayElement.classList.add('completed')
                 }
-                
-                // Backup no localStorage
-                localStorage.setItem('completedDays', JSON.stringify(completedDays));
-                updateCounter();
+                localStorage.setItem('completedDays', JSON.stringify(completedDays))
+                updateCounter()
             } catch (error) {
-                console.error('Erro ao salvar:', error);
-                alert('Erro ao salvar. Verifique sua conexão.');
+                console.error('Erro ao salvar via API:', error)
+                alert('Erro ao salvar. Verifique sua conexão.')
             }
         }
         

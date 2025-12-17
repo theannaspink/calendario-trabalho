@@ -35,3 +35,28 @@ Este projeto adiciona a integração do Vercel Web Analytics para sites estátic
 3. Não comite chaves secretas no repositório — use variáveis de ambiente e, quando possível, rotacione chaves.
 
 Para habilitar o Analytics via painel Vercel: abra o projeto > aba **Analytics** > clique em **Enable**. Após deploy e algumas visitas, os dados começarão a aparecer.
+
+## Integração com Supabase (salvamento de marcações)
+
+Este projeto inclui funções serverless (`/api/getMarks` e `/api/upsertMark`) que fazem a comunicação segura com o Supabase.
+
+Defina as seguintes variáveis em Vercel (Settings → Environment Variables):
+
+- `SUPABASE_URL` — URL do seu projeto Supabase
+- `SUPABASE_SERVICE_KEY` — chave de serviço (service_role) para uso apenas no servidor (não a exponha no cliente)
+
+Crie a tabela SQL abaixo no editor SQL do Supabase:
+
+```sql
+create table if not exists public.workmarks (
+	id uuid primary key default uuid_generate_v4(),
+	user_id text,
+	date date not null,
+	status boolean not null default false,
+	note text,
+	created_at timestamp with time zone default timezone('utc', now())
+);
+create index if not exists workmarks_user_date_idx on public.workmarks(user_id, date);
+```
+
+Depois de configurar as variáveis e criar a tabela, faça um novo deploy na Vercel. O front-end chamará as rotas `/api/getMarks` e `/api/upsertMark` para ler e salvar marcações.
