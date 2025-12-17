@@ -428,13 +428,20 @@
         Escala: Dia Sim / Dia Não • Início: 16/12/2025
     </div>
 
+    <script>
+        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
+
     <script type="module">
         // Importar Supabase
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
         
-        // Configurações do Supabase - SUBSTITUA COM SUAS CREDENCIAIS
+        // Configurações do Supabase - NÃO COMMITAR CHAVES
+        // Substitua a seguir com a sua URL do Supabase e use uma chave ANON pública.
+        // Para evitar expor segredos, defina a chave como uma variável de ambiente no painel Vercel
         const SUPABASE_URL = 'https://xxfmicoulsnwuntynefa.supabase.co'
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4Zm1pY291bHNud3VudHluZWZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYwMDI1NTMsImV4cCI6MjA4MTU3ODU1M30.5vmbSGRe5Ra0dk2vxnsRq7SeOAdXBSipMyystvRV9eI'
+        const SUPABASE_KEY = 'REPLACE_WITH_ANON_KEY'
         
         // Inicializar Supabase
         const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
