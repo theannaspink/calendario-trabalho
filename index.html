@@ -462,12 +462,9 @@
         // Armazenar dias marcados
         let completedDays = [];
         
-        // ID único do usuário (salvo no localStorage)
-        let userId = localStorage.getItem('userId');
-        if (!userId) {
-            userId = 'user_' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('userId', userId);
-        }
+        // Identidade fixa para unificar marcações entre dispositivos
+        // OBS: todo dispositivo usará esse mesmo ID — se quiser multi-usuário, implemente login
+        const userId = 'calendario-da-thai-oficial';
         
         // Funções auxiliares
         function isHoliday(date) {
